@@ -40,7 +40,7 @@ typedef struct thread_args_t {
 } thread_args_t;
 
 /** Function Headers */
-bool detectMotion(IplImage *frame, IplImage *last_frame);
+bool detect_motion(IplImage *frame, IplImage *last_frame);
 bool transmit_frame(int sock, IplImage *frame);
 int tcp_server_socket(unsigned short port);
 void *server_thread(void *thread_args);
@@ -109,7 +109,6 @@ int main(int argc, char *argv[]) {
         frame2_last = cvCreateImage(cvGetSize(frame2), IPL_DEPTH_8U, 1);
         frame3_last = cvCreateImage(cvGetSize(frame3), IPL_DEPTH_8U, 1);
 
-
         cvCvtColor(frame1, frame1_last, CV_RGB2GRAY);
         cvCvtColor(frame2, frame2_last, CV_RGB2GRAY);
         cvCvtColor(frame3, frame3_last, CV_RGB2GRAY);
@@ -127,7 +126,7 @@ int main(int argc, char *argv[]) {
       } else {
         IplImage *scaled_current_frame;
 
-        if (detectMotion(frame1, frame1_last)) {
+        if (detect_motion(frame1, frame1_last)) {
           if (current_perspective != 2) {
             printf("switching to perspective 2\n");
             last_current_frame = cvCloneImage(current_frame);
@@ -135,7 +134,7 @@ int main(int argc, char *argv[]) {
             current_perspective = 2;
           }
         } 
-        if (detectMotion(frame2, frame2_last)) {
+        if (detect_motion(frame2, frame2_last)) {
           if (current_perspective != 1) {
             printf("switching to perspective 1\n");
             last_current_frame = cvCloneImage(current_frame);
@@ -143,7 +142,7 @@ int main(int argc, char *argv[]) {
             current_perspective = 1;
           }
         }
-        if (detectMotion(frame3, frame3_last)) {
+        if (detect_motion(frame3, frame3_last)) {
           if (current_perspective != 0) {
             printf("switching to perspective 0\n");
             last_current_frame = cvCloneImage(current_frame);
@@ -188,7 +187,7 @@ bool transmit_frame(int sock, IplImage *frame) {
   return true;
 }
 
-bool detectMotion(IplImage *frame, IplImage *last_frame) {
+bool detect_motion(IplImage *frame, IplImage *last_frame) {
   IplImage *gray_frame, *frame_diff;
 
   CvSize frame_size = cvGetSize(frame);
