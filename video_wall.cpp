@@ -1,3 +1,17 @@
+/***
+
+Usage: ./video_wall <remote ip> <cam #> <cam #> <cam #> <flip ([0|1])>
+
+Cameras are integers starting at 0.  The order on osx seems to be random so
+you'll just have to play with the values.  Flip is an option to mirror the
+video (about the y-axis) since some webcams will do this automatically.
+
+Press 'c' in the video windows to exit.
+
+TODO: this code leaks pretty quickly so don't run it forever :)
+
+***/
+
 #include "opencv/cv.h"
 #include "opencv2/objdetect/objdetect.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -8,10 +22,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
 
@@ -29,7 +40,6 @@ typedef struct thread_args_t {
 } thread_args_t;
 
 /** Function Headers */
-void first_image(IplImage *frame, IplImage *last_frame);
 bool detectMotion(IplImage *frame, IplImage *last_frame);
 bool transmit_frame(int sock, IplImage *frame);
 int tcp_server_socket(unsigned short port);
@@ -38,15 +48,11 @@ void handle_tcp_client(int sock, thread_args_t *thread_args);
 void spawn_server_thread(thread_args_t thread_args);
 void connect_frame(char *ip, int port, IplImage **frame, int *current_perspective);
 
-
-/** Global variables */
-bool first = true;
-int current_perspective = 0;
-
 RNG rng(12345);
 
 int main(int argc, char *argv[]) {
   char *pair_addr = argv[1];
+  bool first = true;
 
   CvCapture* capture1;
   CvCapture* capture2;
@@ -57,6 +63,8 @@ int main(int argc, char *argv[]) {
   IplImage *frame3, *frame3_last;
 
   IplImage *current_frame;
+ 
+  int current_perspective = 0;
 
   ///////////////////////////////////////////////////
   capture1 = cvCaptureFromCAM(atoi(argv[2]));
@@ -73,6 +81,7 @@ int main(int argc, char *argv[]) {
   cvSetCaptureProperty(capture3, CV_CAP_PROP_FRAME_WIDTH, 320);
   cvSetCaptureProperty(capture3, CV_CAP_PROP_FRAME_HEIGHT, 240);
   printf("opened camera 3 with %fx%f\n", cvGetCaptureProperty(capture3, CV_CAP_PROP_FRAME_WIDTH), cvGetCaptureProperty(capture3, CV_CAP_PROP_FRAME_HEIGHT));
+  ///////////////////////////////////////////////////
 
 
   if(capture1 && capture2 && capture3) {
@@ -189,7 +198,7 @@ bool detectMotion(IplImage *frame, IplImage *last_frame) {
 
   cvCvtColor(frame, gray_frame, CV_RGB2GRAY);
   // This can help with noise
-	//cvThreshold(gray_frame, gray_frame, 100, 255, CV_THRESH_BINARY);
+  //cvThreshold(gray_frame, gray_frame, 100, 255, CV_THRESH_BINARY);
 
   cvAbsDiff(gray_frame, last_frame, frame_diff);
   cvThreshold(frame_diff, frame_diff, 10, 255, CV_THRESH_BINARY);
